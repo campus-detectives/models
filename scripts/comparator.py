@@ -4,6 +4,10 @@ import json
 import psycopg2
 import io
 from PIL import Image
+import logging as log
+
+log.basicConfig(filename="logs.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
+ 
 
 def main():
 
@@ -27,9 +31,9 @@ def main():
             password="postmoose",
             host="localhost"
         )
-        print("Connected to database successfully")
+        log.info("Connected to database successfully")
     except psycopg2.Error as e:
-        print("Unable to connect to the database:", e)
+        log.error("Unable to connect to the database:", e)
 
 
     connection.set_session(autocommit=True)
@@ -38,10 +42,10 @@ def main():
     
     #loading in model wieghts
     if(os.path.exists("./weights.pt")):
-        print("Existing weights found")
+        log.info("Existing weights found")
         model.load_state_dict(torch.load("./weights.pt"))
     else:
-        print("Weights not found")
+        log.error("Weights not found")
 
     
     img = io.StringIO(arguments[1])
@@ -77,6 +81,8 @@ def main():
         if(result>=threshold):
             matching_id.appned([data[0],result])
         
+
+    print(matching_id)
 
 if __name__==__main__:
     main()
