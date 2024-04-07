@@ -19,6 +19,6 @@ class emeddings(nn.Module):
 
     def comparator(self,input1,target):
         
-        output = torch.cat((input1, target), 1)
+        output = torch.cat((input1, target), dim=1)
         output = self.fc(output)
         return output
