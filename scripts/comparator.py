@@ -7,6 +7,13 @@ from PIL import Image
 
 def main():
 
+    '''
+    Arguments Expected:
+    1: Image
+    2: Threshold
+    
+    '''
+    
     arguments=sys.argv
 
     '''
@@ -37,7 +44,7 @@ def main():
         print("Weights not found")
 
     
-    img = Image.open(io.StringIO(png))
+    img = Image.open(io.StringIO(arguments[1]))
 
     #Resize model
     transform = torchvision.transforms.Compose([
@@ -50,9 +57,22 @@ def main():
     model = embeddings.embeddings()
     image_emb = model(img)
 
+    matching_id = []
+    threshold =  arguments[2]
+    
     curr.execute("SELECT * FROM found")
+    found_data = curr.fetchall()
 
-    found_data=curr.fetchall()
+    for data in found_data:
+        found_emb = data[1]
+        found_emb = json.loads(found_emb)
+        found_emb = torch.tensor(found_emb)
+
+        result=model.comparator(found_emb,image_emb)
+        
+        if(result>=threshold):
+            matching_id.appned(data[0])
+        
     
 
 if __name__==__main__:
