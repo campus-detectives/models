@@ -1,3 +1,9 @@
+import torch
+import torchvision
+from torch import nn
+from torchvision.models.resnet import resnet18
+from fastai.vision.learner import create_body
+
 class embeddings(nn.Module):
     def __init__(self):
         super().__init__()

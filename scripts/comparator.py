@@ -44,15 +44,18 @@ def main():
         print("Weights not found")
 
     
-    img = Image.open(io.StringIO(arguments[1]))
+    img = io.StringIO(arguments[1])
+    img = Image.open(img)
 
     #Resize model
     transform = torchvision.transforms.Compose([
     torchvision.transforms.PILToTensor(),
-    torchvision.transforms.Resize(224),
+    torchvision.transforms.Resize(224,224),
     ])
 
     img = transform(img)
+    img = img.type(torch.float32)
+    img = torch.unsqueeze(img,dim=0)
     
     model = embeddings.embeddings()
     image_emb = model(img)
