@@ -7,7 +7,7 @@ from PIL import Image
 import logging as log
 from base64 import b64decode
 
-log.basicConfig(filename="logs.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
+log.basicConfig(filename="logs_comparator.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
  
 
 def main():
@@ -34,6 +34,7 @@ def main():
         log.info("Connected to database successfully")
     except psycopg2.Error as e:
         log.error("Unable to connect to the database:", e)
+        return
 
 
     connection.set_session(autocommit=True)
@@ -86,6 +87,8 @@ def main():
         
 
     print(matching_id)
+
+    return
 
 if __name__==__main__:
     main()
