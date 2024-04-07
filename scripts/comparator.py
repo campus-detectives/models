@@ -5,6 +5,7 @@ import psycopg2
 import io
 from PIL import Image
 import logging as log
+from base64 import b64decode
 
 log.basicConfig(filename="logs.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
  
@@ -13,8 +14,7 @@ def main():
 
     '''
     Arguments Expected:
-    1: Image
-    2: Threshold
+    1: Threshold
     
     '''
     
@@ -48,8 +48,11 @@ def main():
         log.error("Weights not found")
 
     
-    img = io.StringIO(arguments[1])
-    img = Image.open(img)
+    data_uri = input()
+    header, encoded = data_uri.split("base64,", 1)
+    data = b64decode(encoded)
+    image = Image.open(io.BytesIO(data))
+    
 
     #Resize model
     transform = torchvision.transforms.Compose([
@@ -65,7 +68,7 @@ def main():
     image_emb = model(img)
 
     matching_id = []
-    threshold =  arguments[2]
+    threshold =  arguments[1]
     
     curr.execute("SELECT * FROM found")
     found_data = curr.fetchall()
