@@ -70,13 +70,13 @@ def main():
         found_emb = data[1]
         found_emb = json.loads(found_emb)
         found_emb = torch.tensor(found_emb)
-
-        result=model.comparator(found_emb,image_emb)
+        found_emb = torch.unsqueeze(found_emb,dim=0)
+        
+        result=model.comparator(found_emb,image_emb).item()
         
         if(result>=threshold):
-            matching_id.appned(data[0])
+            matching_id.appned([data[0],result])
         
-    
 
 if __name__==__main__:
     main()
