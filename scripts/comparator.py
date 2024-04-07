@@ -8,6 +8,10 @@ from PIL import Image
 def main():
 
     arguments=sys.argv
+
+    '''
+    Connect to database
+    '''
     
     try:
         connection = psycopg2.connect(
@@ -20,7 +24,12 @@ def main():
     except psycopg2.Error as e:
         print("Unable to connect to the database:", e)
 
-    model = embeddings.embeddings()
+
+    connection.set_session(autocommit=True)
+    curr = connection.cursor()
+
+    
+    #loading in model wieghts
     if(os.path.exists("./weights.pt")):
         print("Existing weights found")
         model.load_state_dict(torch.load("./weights.pt"))
@@ -30,15 +39,21 @@ def main():
     
     img = Image.open(io.StringIO(png))
 
+    #Resize model
     transform = torchvision.transforms.Compose([
     torchvision.transforms.PILToTensor(),
     torchvision.transforms.Resize(224),
     ])
 
     img = transform(img)
-
     
-    image_emb = model()
+    model = embeddings.embeddings()
+    image_emb = model(img)
+
+    curr.execute("SELECT * FROM found")
+
+    found_data=curr.fetchall()
+    
 
 if __name__==__main__:
     main()
