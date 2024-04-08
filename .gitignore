@@ -160,5 +160,5 @@ cython_debug/
 #.idea/
 
 # Custom
-FINAL \DATASET/
-FINAL \DATASET.zip
+DATASET/
+temp/

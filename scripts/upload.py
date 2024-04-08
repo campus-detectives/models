@@ -6,6 +6,9 @@ import io
 from PIL import Image
 import logging as log
 from base64 import b64decode
+import sys
+import os
+import torchvision
 
 log.basicConfig(filename="logs_upload.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
  
@@ -26,9 +29,9 @@ def main():
     
     try:
         connection = psycopg2.connect(
-            dbname="postgres",
-            user="postmoose",
-            password="postmoose",
+            dbname="lost_and_found",
+            user="testuser",
+            password="testuser",
             host="localhost"
         )
         log.info("Connected to database successfully")
@@ -49,20 +52,18 @@ def main():
         log.error("Weights not found")
 
 
-    found_id = argumnets[0]
-    curr.execute(f"SELECT image FROM found WHERE id={found_id}")
-    
-    
+    found_id = arguments[1]
+    curr.execute(f"SELECT image FROM item WHERE id={found_id}")
     data_uri = curr.fetchall()[0][0]
     header, encoded = data_uri.split("base64,", 1)
     data = b64decode(encoded)
-    image = Image.open(io.BytesIO(data))
+    img = Image.open(io.BytesIO(data))
     
 
     #Resize model
     transform = torchvision.transforms.Compose([
     torchvision.transforms.PILToTensor(),
-    torchvision.transforms.Resize(224,224),
+    torchvision.transforms.Resize((224,224)),
     ])
 
     img = transform(img)
@@ -75,9 +76,9 @@ def main():
     image_emb = image_emb.tolist()[0]
     image_emb = json.dumps(image_emb)
 
-    curr.execute(f"UPDATE found SET embedding='{something}' WHERE id={found_id}")
+    curr.execute(f"UPDATE item SET embedding='{image_emb}' WHERE id={found_id}")
 
     return
 
-if __name__=="__main__":
+if _name=="main_":
     main()
