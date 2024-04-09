@@ -92,7 +92,7 @@ def main():
         
         result=test_model(found_emb,image_emb)
         
-        if(result<=threshold):
+        if(result<=1.069**threshold):
             matching_id.append(str(data[0]))
         
 
