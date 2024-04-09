@@ -46,7 +46,7 @@ def main():
     #loading in model wieghts
     if(os.path.exists("traced_model.pt")):
         log.info("Existing weights found")
-        model = torch.jit.load('traced_model.pt')
+        model = torch.jit.load('encoder.pt')
     else:
         log.error("Weights not found")
         return
@@ -63,7 +63,7 @@ def main():
     #Resize model
     transform = torchvision.transforms.Compose([
     torchvision.transforms.PILToTensor(),
-    torchvision.transforms.Resize((224,224)),
+    torchvision.transforms.Resize((512,512)),
     ])
 
     img = transform(img)
