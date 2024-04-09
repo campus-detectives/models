@@ -44,11 +44,12 @@ def main():
 
     
     #loading in model wieghts
-    if(os.path.exists("./weights.pt")):
+    if(os.path.exists("traced_model.pt")):
         log.info("Existing weights found")
-        model.load_state_dict(torch.load("./weights.pt"))
+        model = torch.jit.load('traced_model.pt')
     else:
         log.error("Weights not found")
+        return
 
 
     found_id = arguments[1]
@@ -69,9 +70,11 @@ def main():
     img = img.type(torch.float32)
     img = torch.unsqueeze(img,dim=0)
     
-    model = torch.jit.load('traced_model.pt')
+    
     image_emb = model(img)
 
+    log.info(f"Embeddings successfully generated.  Shape {image_emb.shape}")
+    
     image_emb = image_emb.tolist()[0]
     image_emb = json.dumps(image_emb)
 
@@ -79,5 +82,5 @@ def main():
 
     return
 
-if _name=="main_":
+if __name__=="__main__":
     main()

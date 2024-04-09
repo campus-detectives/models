@@ -10,10 +10,17 @@ import os
 import torchvision
 
 log.basicConfig(filename="logs_comparator.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
- 
+
+
+def test_model(input1,input2):
+
+    diff = input1 - input2
+    dist_sq = torch.sum(torch.pow(diff, 2), 1)
+    dist = torch.sqrt(dist_sq)
+    return dist.item()
+    
 
 def main():
-    print("hi")
     '''
     Arguments Expected:
     1: Threshold
@@ -44,11 +51,12 @@ def main():
 
     
     #loading in model wieghts
-    if(os.path.exists("./weights.pt")):
+    if(os.path.exists("traced_model.pt")):
         log.info("Existing weights found")
-        model.load_state_dict(torch.load("./weights.pt"))
+        model = torch.jit.load('traced_model.pt')
     else:
         log.error("Weights not found")
+        return 
 
     
     data_uri = input()
@@ -66,14 +74,14 @@ def main():
     img = transform(img)
     img = img.type(torch.float32)
     img = torch.unsqueeze(img,dim=0)
-    
-    model = torch.jit.load('traced_model.pt')
-    image_emb = model(img)
+
+    with torch.inference_mode():
+        image_emb = model(img)
 
     matching_id = []
     threshold =  float(arguments[1])
     
-    curr.execute("SELECT id, embedding FROM item WHERE embedding IS NOT NULL")
+    curr.execute("SELECT id, embedding FROM item WHERE embedding IS NOT NULL and claimed=false")
     found_data = curr.fetchall()
 
     for data in found_data:
@@ -82,9 +90,9 @@ def main():
         found_emb = torch.tensor(found_emb)
         found_emb = torch.unsqueeze(found_emb,dim=0)
         
-        result=model.comparator(found_emb,image_emb).item()
+        result=test_model(found_emb,image_emb)
         
-        if(result>=threshold):
+        if(result<=threshold):
             matching_id.append(str(data[0]))
         
 
@@ -93,5 +101,5 @@ def main():
 
     return
 
-if _name=="main_":
+if __name__=="__main__":
     main()
