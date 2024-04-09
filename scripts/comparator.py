@@ -93,20 +93,19 @@ def main():
     curr.execute("SELECT id, embedding FROM item WHERE embedding IS NOT NULL and claimed=false")
     found_data = curr.fetchall()
 
-    vecs = []
+    final_output=""
     
     for data in found_data:
         found_emb = data[1]
         found_emb = json.loads(found_emb)
         found_emb = torch.tensor(found_emb)
         found_emb = torch.unsqueeze(found_emb,dim=0)
-        vecs.append(found_emb)
-        
+        result=test_model(found_emb,vecs)
+        if(result<(35-threshold/5)):
+            final_output+=data[0]+" "
     
 
-    vectors = cdist(image_emb , vecs).squeeze().argsort()
-
-    print(vectors[0],vectors[1])
+    print(final_output)
     
     return
 
