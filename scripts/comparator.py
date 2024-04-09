@@ -1,4 +1,3 @@
-import embeddings
 import torch
 import json
 import psycopg2
@@ -68,7 +67,7 @@ def main():
     img = img.type(torch.float32)
     img = torch.unsqueeze(img,dim=0)
     
-    model = embeddings.embeddings()
+    model = torch.jit.load('traced_model.pt')
     image_emb = model(img)
 
     matching_id = []
