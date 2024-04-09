@@ -44,12 +44,22 @@ def main():
 
     
     #loading in model wieghts
-    if(os.path.exists("traced_model.pt")):
-        log.info("Existing weights found")
-        model = torch.jit.load('encoder.pt')
-    else:
-        log.error("Weights not found")
-        return
+    model = torchvision.models.resnet18(weights = "DEFAULT")
+    model.eval()
+
+    transform = transforms.Compose([
+        transforms.Resize((256 , 256)) ,
+        transforms.ToTensor() ,
+        transforms.Normalize(mean = [0.485 , 0.456 , 0.406] , std = [0.229 , 0.224 , 0.225])
+    ])
+    
+    activation = {}
+    def get_activation(name):
+        def hook(model , input , output):
+            activation[name] = output.detach()
+        return hook
+    
+    model.avgpool.register_forward_hook(get_activation("avgpool"))
 
 
     found_id = arguments[1]
@@ -60,18 +70,13 @@ def main():
     img = Image.open(io.BytesIO(data))
     
 
-    #Resize model
-    transform = torchvision.transforms.Compose([
-    torchvision.transforms.PILToTensor(),
-    torchvision.transforms.Resize((512,512)),
-    ])
-
     img = transform(img)
     img = img.type(torch.float32)
     img = torch.unsqueeze(img,dim=0)
     
     
     image_emb = model(img)
+    image_emb = activation["avgpool"].numpy().squeeze()[None , ...]
 
     log.info(f"Embeddings successfully generated.  Shape {image_emb.shape}")
     

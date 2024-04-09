@@ -8,6 +8,7 @@ from base64 import b64decode
 import sys
 import os
 import torchvision
+import numpy as np
 
 log.basicConfig(filename="logs_comparator.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
 
@@ -51,25 +52,32 @@ def main():
 
     
     #loading in model wieghts
-    if(os.path.exists("traced_model.pt")):
-        log.info("Existing weights found")
-        model = torch.jit.load('encoder.pt')
-    else:
-        log.error("Weights not found")
-        return 
+    model = torchvision.models.resnet18(weights = "DEFAULT")
+
+    all_names = []
+    all_vecs = None
+    model.eval()
+
+    transform = transforms.Compose([
+        transforms.Resize((256 , 256)) ,
+        transforms.ToTensor() ,
+        transforms.Normalize(mean = [0.485 , 0.456 , 0.406] , std = [0.229 , 0.224 , 0.225])
+    ])
+    
+    activation = {}
+    def get_activation(name):
+        def hook(model , input , output):
+            activation[name] = output.detach()
+        return hook
+    
+    model.avgpool.register_forward_hook(get_activation("avgpool"))
 
     
     data_uri = input()
     header, encoded = data_uri.split("base64,", 1)
     data = b64decode(encoded)
     img = Image.open(io.BytesIO(data))
-    
 
-    #Resize model
-    transform = torchvision.transforms.Compose([
-    torchvision.transforms.PILToTensor(),
-    torchvision.transforms.Resize((512,512)),
-    ])
 
     img = transform(img)
     img = img.type(torch.float32)
@@ -77,6 +85,7 @@ def main():
 
     with torch.inference_mode():
         image_emb = model(img)
+        image_emb  = activation["avgpool"].numpy().squeeze()[None , ...]
 
     matching_id = []
     threshold =  float(arguments[1])
@@ -84,21 +93,21 @@ def main():
     curr.execute("SELECT id, embedding FROM item WHERE embedding IS NOT NULL and claimed=false")
     found_data = curr.fetchall()
 
+    vecs = []
+    
     for data in found_data:
         found_emb = data[1]
         found_emb = json.loads(found_emb)
         found_emb = torch.tensor(found_emb)
         found_emb = torch.unsqueeze(found_emb,dim=0)
+        vecs.append(found_emb)
         
-        result=test_model(found_emb,image_emb)
-        
-        if(result<=600*threshold):
-            matching_id.append(str(data[0]))
-        
+    
 
-    matching_ids = " ".join(matching_id)
-    print(matching_ids)
+    vectors = cdist(image_emb , vecs).squeeze().argsort()
 
+    print(vectors[0],vectors[1])
+    
     return
 
 if __name__=="__main__":
