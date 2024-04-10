@@ -162,3 +162,7 @@ cython_debug/
 # Custom
 DATASET/
 temp/
+.DS_Store
+encoder.pt
+image.txt
+traced_model_vit_direct.pt

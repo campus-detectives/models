@@ -9,6 +9,8 @@ import sys
 import os
 import torchvision
 import numpy as np
+from torchvision import transforms
+import scipy.spatial.distance as cdist
 
 log.basicConfig(filename="logs_comparator.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
 
@@ -24,7 +26,7 @@ def test_model(input1,input2):
 def main():
     '''
     Arguments Expected:
-    1: Threshold
+    1: No. of results
     
     '''
     
@@ -88,22 +90,44 @@ def main():
         image_emb  = activation["avgpool"].numpy().squeeze()[None , ...]
 
     matching_id = []
-    threshold =  float(arguments[1])
+    n =  int(arguments[1])
+
+    curr.execute("SELECT COUNT(*) from item")
+
+    m = curr.fetchone()[0]
+    #print(curr.fetchone())
+    if(n>=m):
+        n=m
     
-    curr.execute("SELECT id, embedding FROM item WHERE embedding IS NOT NULL and claimed=false")
+    
+    curr.execute("SELECT id, embedding FROM item WHERE embedding IS NOT NULL")
     found_data = curr.fetchall()
 
     final_output=""
-    
+    vec=None
     for data in found_data:
         found_emb = data[1]
+        matching_id.append(data[0])
         found_emb = json.loads(found_emb)
         found_emb = torch.tensor(found_emb)
         found_emb = torch.unsqueeze(found_emb,dim=0)
-        result=test_model(found_emb,vecs)
+        result=test_model(found_emb,image_emb)
+        log.info(f"Distance between {data[0]} and input image is {result}")
+        '''
         if(result<(35-threshold/5)):
-            final_output+=data[0]+" "
+            final_output+=str(data[0])+" "'''
+        if(vec is None):
+            vec = found_emb
+        else:
+            vec=np.vstack((vec,found_emb))
     
+    #print(vec.shape)
+    result=cdist.cdist(vec,image_emb).squeeze().argsort()[0:n]
+    #print(result)
+
+    #print(result)
+    for i in result:
+        final_output+=str(matching_id[i])+" "
 
     print(final_output)
     

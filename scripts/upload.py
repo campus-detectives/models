@@ -8,6 +8,7 @@ from base64 import b64decode
 import sys
 import os
 import torchvision
+from torchvision import transforms
 
 log.basicConfig(filename="logs_upload.log",filemode="w+",level=log.INFO,format="Level:%(levelname)s Message: \t\t %(message)s")
  
